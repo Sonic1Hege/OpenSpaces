@@ -18,11 +18,11 @@
             font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             height: 100vh;
             width: 100vw;
-            overflow: hidden; /* Prevents scrollbars */
+            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
-            perspective: 1000px; /* Essential for the 3D depth feel */
+            perspective: 1000px;
         }
 
         /* --- 2. THE VORTEX (FALLING EFFECT) --- */
@@ -42,17 +42,17 @@
 
         .vortex-ring {
             position: absolute;
-            width: 100px; /* Base size */
-            height: 100px;
+            /* CHANGED: Made the base ring much larger to fit text inside */
+            width: 50vmin; 
+            height: 50vmin;
             border-radius: 50%;
             
-            /* The "Tail" Effect: Only painting part of the border */
+            /* The "Tail" Effect */
             border: 2px solid transparent;
-            border-top: 2px solid rgba(255, 255, 255, 0.8);
-            border-left: 2px solid rgba(255, 255, 255, 0.4);
+            border-top: 2px solid rgba(255, 255, 255, 0.5); /* Slightly lower opacity for elegance */
+            border-left: 2px solid rgba(255, 255, 255, 0.2);
             
-            /* Glow for atmosphere */
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1); 
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.05); 
             
             opacity: 0;
             will-change: transform, opacity;
@@ -63,28 +63,26 @@
             position: relative;
             z-index: 10;
             text-align: center;
-            padding: 20px;
+            /* CHANGED: Added max-width to ensure it stays strictly in the center circle */
+            max-width: 40vmin; 
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
-            /* Exclusion makes the white text readable even if a white ring passes under it */
+            gap: 1rem;
             mix-blend-mode: exclusion; 
         }
 
         /* --- TYPOGRAPHY --- */
         
-        /* Main Title "OpenSpaces" */
         h1 {
-            font-size: 5rem;
+            /* CHANGED: Smaller text to fit inside the ring */
+            font-size: 3rem; 
             font-weight: 700;
-            letter-spacing: -3px;
+            letter-spacing: -2px;
             
-            /* Start invisible and blurry */
             opacity: 0;
             filter: blur(20px);
             transform: scale(0.9);
             
-            /* The Materialization Transition */
             transition: opacity 3s ease-in-out, filter 3s ease-in-out, transform 3s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
@@ -94,9 +92,9 @@
             transform: scale(1);
         }
 
-        /* Subtitle */
         p {
-            font-size: 1.2rem;
+            /* CHANGED: Smaller subtitle */
+            font-size: 0.9rem;
             color: #cccccc;
             font-weight: 300;
             letter-spacing: 2px;
@@ -117,18 +115,18 @@
 
         /* Mobile Adjustments */
         @media (max-width: 600px) {
-            h1 { font-size: 3rem; letter-spacing: -1px; }
-            p { font-size: 0.8rem; max-width: 80%; margin: 0 auto; line-height: 1.5; }
+            /* Even smaller on mobile to ensure it fits */
+            .vortex-ring { width: 80vw; height: 80vw; }
+            h1 { font-size: 2rem; }
+            p { font-size: 0.75rem; }
         }
 
     </style>
 </head>
 <body>
 
-    <!-- The 3D Vortex Container -->
     <div id="vortex-container"></div>
 
-    <!-- The Text Content -->
     <div id="content">
         <h1 id="main-title">OpenSpaces</h1>
         <p id="subtitle">You must be here early, there's nothing else</p>
@@ -140,58 +138,48 @@
             const mainTitle = document.getElementById('main-title');
             const subtitle = document.getElementById('subtitle');
 
-            /* --- 1. VORTEX ANIMATION SYSTEM --- */
+            /* --- VORTEX ANIMATION SYSTEM --- */
             
             function createRing() {
                 const ring = document.createElement('div');
                 ring.classList.add('vortex-ring');
-                
-                // Add ring to the DOM
                 container.appendChild(ring);
 
-                // We use Web Animations API for complex sequencing
                 const animation = ring.animate([
                     { 
-                        transform: 'translateZ(-1000px) rotate(0deg) scale(0.1)', 
+                        /* Start slightly larger so the "hole" is visible immediately */
+                        transform: 'translateZ(-1000px) rotate(0deg) scale(0.5)', 
                         opacity: 0 
                     },
                     { 
-                        opacity: 0.8, 
-                        offset: 0.2 // Fade in quickly
+                        opacity: 0.6, 
+                        offset: 0.2 
                     },
                     { 
-                        transform: 'translateZ(500px) rotate(360deg) scale(4)', 
+                        /* End larger to create the tunnel effect passing the user */
+                        transform: 'translateZ(500px) rotate(360deg) scale(3)', 
                         opacity: 0 
                     }
                 ], {
-                    duration: 8000, // 8 Seconds (Slow & Mesmerizing)
-                    easing: 'cubic-bezier(0.4, 0.0, 0.2, 1)', // Smooth acceleration
+                    duration: 8000, 
+                    easing: 'cubic-bezier(0.4, 0.0, 0.2, 1)', 
                     iterations: 1
                 });
 
-                // Remove from DOM when animation finishes to save memory
                 animation.onfinish = () => {
                     ring.remove();
                 };
             }
 
-            // Spawn a new ring periodically
-            // 400ms gap creates a dense tunnel. Increase to 800ms for a sparse tunnel.
             setInterval(createRing, 400); 
-
-            // Initialize a few rings immediately so the screen isn't empty at start
             createRing();
             setTimeout(createRing, 200);
 
-
-            /* --- 2. TEXT MATERIALIZATION SEQUENCE --- */
-            
-            // 2.5 Seconds: Title materializes
+            /* --- TEXT SEQUENCE --- */
             setTimeout(() => {
                 mainTitle.classList.add('materialized');
             }, 2500);
 
-            // 4.0 Seconds: Subtitle fades in
             setTimeout(() => {
                 subtitle.classList.add('visible');
             }, 4000);

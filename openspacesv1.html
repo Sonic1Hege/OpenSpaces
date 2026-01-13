@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenSpaces</title>
+    <style>
+        /* --- 1. RESET & BASE --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Optimized 3D setting */
+            perspective: 800px;
+        }
+
+        /* --- 2. THE VORTEX --- */
+        #vortex-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+            transform-style: preserve-3d;
+        }
+
+        .vortex-ring {
+            position: absolute;
+            width: 50vmin; 
+            height: 50vmin;
+            border-radius: 50%;
+            
+            /* Simplified Border for better performance (No glitching) */
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            /* Only a faint glow to save GPU power */
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1); 
+            
+            opacity: 0;
+            /* Tell browser to prepare for animation */
+            will-change: transform, opacity;
+        }
+
+        /* --- 3. CONTENT LAYER --- */
+        #content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            max-width: 40vmin; 
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        h1 {
+            font-size: 3rem; 
+            font-weight: 700;
+            letter-spacing: -2px;
+            
+            opacity: 0;
+            filter: blur(20px);
+            transform: scale(0.9);
+            
+            transition: opacity 3s ease-in-out, filter 3s ease-in-out, transform 3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        h1.materialized {
+            opacity: 1;
+            filter: blur(0px);
+            transform: scale(1);
+        }
+
+        p {
+            font-size: 0.9rem;
+            color: #888; /* Darker grey for subtlety */
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            
+            opacity: 0;
+            transform: translateY(20px);
+            
+            transition: opacity 2.5s ease, transform 2.5s ease;
+        }
+
+        p.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (max-width: 600px) {
+            .vortex-ring { width: 80vw; height: 80vw; }
+            h1 { font-size: 2rem; }
+            p { font-size: 0.75rem; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="vortex-container"></div>
+
+    <div id="content">
+        <h1 id="main-title">OpenSpaces</h1>
+        <p id="subtitle">You must be here early, there's nothing else</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('vortex-container');
+            const mainTitle = document.getElementById('main-title');
+            const subtitle = document.getElementById('subtitle');
+            
+            // Variable to hold the interval ID so we can stop it later
+            let spawnInterval;
+
+            /* --- VORTEX ENGINE --- */
+            function createRing() {
+                const ring = document.createElement('div');
+                ring.classList.add('vortex-ring');
+                container.appendChild(ring);
+
+                const animation = ring.animate([
+                    { 
+                        transform: 'translateZ(-1000px) rotate(0deg) scale(0.5)', 
+                        opacity: 0 
+                    },
+                    { 
+                        opacity: 0.5, 
+                        offset: 0.2 
+                    },
+                    { 
+                        transform: 'translateZ(500px) rotate(180deg) scale(3)', 
+                        opacity: 0 
+                    }
+                ], {
+                    duration: 6000, 
+                    easing: 'linear', 
+                    iterations: 1
+                });
+
+                animation.onfinish = () => {
+                    ring.remove();
+                };
+            }
+
+            // Start the engine
+            // Spawning every 600ms (Slower spawn rate = Less glitching)
+            spawnInterval = setInterval(createRing, 600); 
+            createRing(); // One immediately
+
+            /* --- ARRIVAL SEQUENCE --- */
+            
+            // 1. STOP THE RINGS at 2.5 seconds (just as text appears)
+            setTimeout(() => {
+                clearInterval(spawnInterval);
+            }, 2500);
+
+            // 2. SHOW TITLE at 2.5 seconds
+            setTimeout(() => {
+                mainTitle.classList.add('materialized');
+            }, 2500);
+
+            // 3. SHOW SUBTITLE at 4.0 seconds
+            setTimeout(() => {
+                subtitle.classList.add('visible');
+            }, 4000);
+        });
+    </script>
+</body>
+</html>

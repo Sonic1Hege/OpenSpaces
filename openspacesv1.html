@@ -10,6 +10,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            outline: none;
         }
 
         body {
@@ -22,7 +23,6 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            /* Optimized 3D setting */
             perspective: 800px;
         }
 
@@ -46,14 +46,9 @@
             width: 50vmin; 
             height: 50vmin;
             border-radius: 50%;
-            
-            /* Simplified Border for better performance (No glitching) */
             border: 1px solid rgba(255, 255, 255, 0.4);
-            /* Only a faint glow to save GPU power */
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.1); 
-            
             opacity: 0;
-            /* Tell browser to prepare for animation */
             will-change: transform, opacity;
         }
 
@@ -62,52 +57,98 @@
             position: relative;
             z-index: 10;
             text-align: center;
-            max-width: 40vmin; 
+            width: 100%;
+            max-width: 600px;
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            align-items: center;
+            gap: 2rem;
         }
 
+        /* The Main Text */
         h1 {
             font-size: 3rem; 
             font-weight: 700;
             letter-spacing: -2px;
+            white-space: nowrap; /* Prevents wrapping during expansion */
             
             opacity: 0;
             filter: blur(20px);
             transform: scale(0.9);
             
-            transition: opacity 3s ease-in-out, filter 3s ease-in-out, transform 3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            /* Standard fade in */
+            transition: all 2s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
+        /* Class to make text appear normally */
         h1.materialized {
             opacity: 1;
             filter: blur(0px);
             transform: scale(1);
+            letter-spacing: -2px;
         }
 
-        p {
-            font-size: 0.9rem;
-            color: #888; /* Darker grey for subtlety */
-            font-weight: 300;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            
+        /* Class to make text explode into "particles" */
+        h1.dispersed {
             opacity: 0;
-            transform: translateY(20px);
-            
-            transition: opacity 2.5s ease, transform 2.5s ease;
+            filter: blur(20px);
+            transform: scale(1.5);
+            letter-spacing: 50px; /* This makes letters fly apart */
+            text-shadow: 0 0 20px white; /* Adds a glowing "dust" effect */
         }
 
-        p.visible {
+        /* --- 4. INPUT SECTION --- */
+        #input-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 1.5s ease, transform 1.5s ease;
+        }
+
+        #input-section.visible {
             opacity: 1;
             transform: translateY(0);
+        }
+
+        label {
+            font-size: 0.9rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 300;
+        }
+
+        /* The Input Bar */
+        input[type="text"] {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+            color: white;
+            font-size: 1.5rem;
+            text-align: center;
+            padding: 10px;
+            width: 300px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-bottom: 1px solid white;
+        }
+        
+        input[type="text"]::placeholder {
+            color: #444;
+            font-size: 1rem;
+            font-style: italic;
         }
 
         @media (max-width: 600px) {
             .vortex-ring { width: 80vw; height: 80vw; }
             h1 { font-size: 2rem; }
-            p { font-size: 0.75rem; }
+            input[type="text"] { width: 80%; }
         }
 
     </style>
@@ -118,16 +159,19 @@
 
     <div id="content">
         <h1 id="main-title">OpenSpaces</h1>
-        <p id="subtitle">You must be here early, there's nothing else</p>
+        
+        <div id="input-section">
+            <label for="username">Please enter your name</label>
+            <input type="text" id="username" autocomplete="off">
+        </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const container = document.getElementById('vortex-container');
             const mainTitle = document.getElementById('main-title');
-            const subtitle = document.getElementById('subtitle');
+            const inputSection = document.getElementById('input-section');
             
-            // Variable to hold the interval ID so we can stop it later
             let spawnInterval;
 
             /* --- VORTEX ENGINE --- */
@@ -137,50 +181,51 @@
                 container.appendChild(ring);
 
                 const animation = ring.animate([
-                    { 
-                        transform: 'translateZ(-1000px) rotate(0deg) scale(0.5)', 
-                        opacity: 0 
-                    },
-                    { 
-                        opacity: 0.5, 
-                        offset: 0.2 
-                    },
-                    { 
-                        transform: 'translateZ(500px) rotate(180deg) scale(3)', 
-                        opacity: 0 
-                    }
+                    { transform: 'translateZ(-1000px) rotate(0deg) scale(0.5)', opacity: 0 },
+                    { opacity: 0.5, offset: 0.2 },
+                    { transform: 'translateZ(500px) rotate(180deg) scale(3)', opacity: 0 }
                 ], {
-                    duration: 6000, 
-                    easing: 'linear', 
-                    iterations: 1
+                    duration: 6000, easing: 'linear', iterations: 1
                 });
 
-                animation.onfinish = () => {
-                    ring.remove();
-                };
+                animation.onfinish = () => ring.remove();
             }
 
-            // Start the engine
-            // Spawning every 600ms (Slower spawn rate = Less glitching)
             spawnInterval = setInterval(createRing, 600); 
-            createRing(); // One immediately
+            createRing();
 
-            /* --- ARRIVAL SEQUENCE --- */
+            /* --- THE SEQUENCE --- */
             
-            // 1. STOP THE RINGS at 2.5 seconds (just as text appears)
+            // 1. STOP VORTEX & SHOW "OpenSpaces" (2.5s)
             setTimeout(() => {
                 clearInterval(spawnInterval);
-            }, 2500);
-
-            // 2. SHOW TITLE at 2.5 seconds
-            setTimeout(() => {
                 mainTitle.classList.add('materialized');
             }, 2500);
 
-            // 3. SHOW SUBTITLE at 4.0 seconds
+            // 2. DEMATERIALIZE "OpenSpaces" (Wait 2s after appearing = 4.5s total)
             setTimeout(() => {
-                subtitle.classList.add('visible');
-            }, 4000);
+                // Remove the visible class and add the dispersed class
+                mainTitle.classList.remove('materialized');
+                mainTitle.classList.add('dispersed');
+            }, 4500);
+
+            // 3. CHANGE TEXT & REFORM as "Welcome" (Wait for disperse to finish = 5.5s total)
+            setTimeout(() => {
+                // Change text while it is invisible/dispersed
+                mainTitle.innerText = "Welcome";
+                
+                // Remove disperse class and add materialized back to bring it in
+                mainTitle.classList.remove('dispersed');
+                
+                // Small delay to ensure browser registers the class removal before adding 'materialized'
+                void mainTitle.offsetWidth; // Force Reflow
+                mainTitle.classList.add('materialized');
+            }, 5500);
+
+            // 4. SHOW INPUT BAR (After "Welcome" is fully visible = 7.0s total)
+            setTimeout(() => {
+                inputSection.classList.add('visible');
+            }, 7000);
         });
     </script>
 </body>

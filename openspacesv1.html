@@ -5,18 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OpenSpaces</title>
     <style>
-        /* --- 1. RESET & BASE --- */
+        /* --- 1. RESET & VARIABLES --- */
+        :root {
+            --theme-color: #ffffff; 
+            --theme-glow: 0 0 20px rgba(255, 255, 255, 0.5);
+            --bg-color: #000000;
+            --text-color: #ffffff;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             outline: none;
+            font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
-            background-color: #000000;
-            color: #ffffff;
-            font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             height: 100vh;
             width: 100vw;
             overflow: hidden;
@@ -24,9 +31,10 @@
             justify-content: center;
             align-items: center;
             perspective: 800px;
+            transition: background-color 2s ease, color 2s ease;
         }
 
-        /* --- 2. THE VORTEX --- */
+        /* --- 2. THE VORTEX (Intro Layer) --- */
         #vortex-container {
             position: absolute;
             top: 0;
@@ -39,6 +47,8 @@
             align-items: center;
             pointer-events: none;
             transform-style: preserve-3d;
+            opacity: 1;
+            transition: opacity 2s ease;
         }
 
         .vortex-ring {
@@ -52,35 +62,33 @@
             will-change: transform, opacity;
         }
 
-        /* --- 3. CONTENT LAYER --- */
-        #content {
+        /* --- 3. INTRO CONTENT LAYER --- */
+        #intro-content {
             position: relative;
             z-index: 10;
             text-align: center;
             width: 100%;
-            max-width: 600px;
+            max-width: 800px;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 2rem;
+            transition: opacity 1s ease;
         }
 
-        /* The Main Text */
         h1 {
             font-size: 3rem; 
             font-weight: 700;
             letter-spacing: -2px;
-            white-space: nowrap; /* Prevents wrapping during expansion */
-            
+            white-space: nowrap; 
+            color: var(--theme-color);
+            text-shadow: var(--theme-glow);
             opacity: 0;
             filter: blur(20px);
             transform: scale(0.9);
-            
-            /* Standard fade in */
-            transition: all 2s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transition: all 1.5s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
-        /* Class to make text appear normally */
         h1.materialized {
             opacity: 1;
             filter: blur(0px);
@@ -88,89 +96,287 @@
             letter-spacing: -2px;
         }
 
-        /* Class to make text explode into "particles" */
         h1.dispersed {
             opacity: 0;
             filter: blur(20px);
             transform: scale(1.5);
-            letter-spacing: 50px; /* This makes letters fly apart */
-            text-shadow: 0 0 20px white; /* Adds a glowing "dust" effect */
+            letter-spacing: 50px; 
         }
 
-        /* --- 4. INPUT SECTION --- */
-        #input-section {
+        /* Input Styling */
+        .input-group {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 10px;
             opacity: 0;
             transform: translateY(30px);
-            transition: opacity 1.5s ease, transform 1.5s ease;
+            transition: opacity 1s ease, transform 1s ease;
+            position: absolute; 
+            top: 100%; 
+            width: 100%;
+            pointer-events: none; 
         }
 
-        #input-section.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        .input-group.active { opacity: 1; transform: translateY(0); pointer-events: all; }
+        .input-group.finished { opacity: 0; transform: translateY(-20px); }
 
-        label {
-            font-size: 0.9rem;
-            color: #888;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: 300;
-        }
-
-        /* The Input Bar */
-        input[type="text"] {
+        label { font-size: 0.9rem; color: #888; text-transform: uppercase; letter-spacing: 2px; font-weight: 300; }
+        
+        input[type="text"], input[type="password"] {
             background: transparent;
             border: none;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
-            color: white;
+            border-bottom: 1px solid rgba(150, 150, 150, 0.5);
+            color: inherit; 
             font-size: 1.5rem;
             text-align: center;
             padding: 10px;
             width: 300px;
-            font-family: inherit;
             transition: border-color 0.3s;
         }
+        input:focus { border-bottom: 1px solid var(--theme-color); }
+        .shake { animation: shake 0.5s; border-bottom: 1px solid #ff4f4f !important; color: #ff4f4f !important; }
 
-        input[type="text"]:focus {
-            border-bottom: 1px solid white;
+        /* Theme Grid */
+        #theme-section {
+            display: flex; flex-direction: column; gap: 15px;
+            opacity: 0; transform: translateY(20px); transition: opacity 1s ease, transform 1s ease;
+            margin-top: 20px; align-items: center; pointer-events: none;
         }
+        #theme-section.active { opacity: 1; transform: translateY(0); pointer-events: all; }
         
-        input[type="text"]::placeholder {
-            color: #444;
-            font-size: 1rem;
-            font-style: italic;
+        .theme-row { display: flex; gap: 10px; justify-content: center; }
+        .color-box {
+            width: 40px; height: 40px; border-radius: 8px; cursor: pointer;
+            border: 2px solid transparent; transition: transform 0.2s;
+        }
+        .color-box:hover { transform: scale(1.2); }
+        .color-box[data-color="#000000"] { border: 1px solid #555; }
+
+
+        /* --- 4. WIZARD LAYER (White Screen) --- */
+        #wizard-container {
+            display: none; 
+            position: relative;
+            z-index: 20;
+            width: 100%;
+            max-width: 500px;
+            padding: 40px;
+            text-align: center;
+            opacity: 1;
+            transition: opacity 2s ease;
         }
 
-        @media (max-width: 600px) {
-            .vortex-ring { width: 80vw; height: 80vw; }
-            h1 { font-size: 2rem; }
-            input[type="text"] { width: 80%; }
+        .wizard-step {
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            animation: fadeInStep 0.5s ease;
         }
+        .wizard-step.active { display: flex; }
+
+        .wizard-title { font-size: 1.8rem; font-weight: 700; margin-bottom: 10px; color: #333; }
+        .wizard-desc { font-size: 1rem; color: #666; margin-bottom: 20px; }
+
+        /* Wizard Buttons */
+        .wiz-btn {
+            padding: 12px 30px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            background-color: #eee;
+            color: #333;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        .wiz-btn.primary {
+            background-color: var(--theme-color);
+            color: white; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .wiz-btn:hover { transform: translateY(-2px); }
+
+        /* Toggles & Options */
+        .option-group { display: flex; gap: 15px; }
+        .option-card {
+            border: 2px solid #eee; padding: 15px 25px; border-radius: 12px;
+            cursor: pointer; transition: all 0.2s; color: #555;
+        }
+        .option-card.selected {
+            border-color: var(--theme-color); background-color: rgba(0,0,0,0.02);
+            color: var(--theme-color); font-weight: bold;
+        }
+
+        .toggle-row {
+            display: flex; justify-content: space-between; align-items: center; width: 100%;
+            padding: 15px; border-bottom: 1px solid #eee;
+        }
+        .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .4s; border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px;
+            background-color: white; transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--theme-color); }
+        input:checked + .slider:before { transform: translateX(24px); }
+
+        /* --- 5. FINAL ERROR MESSAGE --- */
+        #final-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ffffff;
+            font-family: 'Courier New', Courier, monospace; /* Monospace for terminal error feel */
+            font-size: 1.2rem;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 2s ease;
+            z-index: 100;
+        }
+
+        @keyframes fadeInStep { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
 
     </style>
 </head>
 <body>
 
+    <!-- LAYER 1: VORTEX & INTRO (Dark Mode) -->
     <div id="vortex-container"></div>
 
-    <div id="content">
+    <div id="intro-content">
         <h1 id="main-title">OpenSpaces</h1>
         
-        <div id="input-section">
+        <!-- Name -->
+        <div id="name-stage" class="input-group">
             <label for="username">Please enter your name</label>
             <input type="text" id="username" autocomplete="off">
         </div>
+
+        <!-- Password -->
+        <div id="password-stage" class="input-group">
+            <label for="password">Enter the password that was provided</label>
+            <input type="password" id="password" autocomplete="off">
+        </div>
+
+        <!-- Theme Grid -->
+        <div id="theme-section">
+            <div class="theme-row">
+                <div class="color-box" style="background-color: #ff9999;" data-color="#ff9999"></div>
+                <div class="color-box" style="background-color: #99ffcc;" data-color="#99ffcc"></div>
+                <div class="color-box" style="background-color: #99ccff;" data-color="#99ccff"></div>
+                <div class="color-box" style="background-color: #e099ff;" data-color="#e099ff"></div>
+            </div>
+            <div class="theme-row">
+                <div class="color-box" style="background-color: #ff4f4f;" data-color="#ff4f4f"></div>
+                <div class="color-box" style="background-color: #ffd700;" data-color="#ffd700"></div>
+                <div class="color-box" style="background-color: #4fffae;" data-color="#4fffae"></div>
+                <div class="color-box" style="background-color: #4fafff;" data-color="#4fafff"></div>
+                <div class="color-box" style="background-color: #bf4fff;" data-color="#bf4fff"></div>
+                <div class="color-box" style="background-color: #ffffff;" data-color="#333333"></div> 
+                <div class="color-box" style="background-color: #000000;" data-color="#000000"></div>
+            </div>
+            <div class="theme-row">
+                <div class="color-box" style="background-color: #8b0000;" data-color="#8b0000"></div>
+                <div class="color-box" style="background-color: #b8860b;" data-color="#b8860b"></div>
+                <div class="color-box" style="background-color: #006400;" data-color="#006400"></div>
+                <div class="color-box" style="background-color: #00008b;" data-color="#00008b"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LAYER 2: WIZARD (White Screen) -->
+    <div id="wizard-container">
+        
+        <!-- Step 1: Time Format -->
+        <div class="wizard-step active" id="step-1">
+            <div class="wizard-title">Time Format</div>
+            <div class="wizard-desc">How should we display the time?</div>
+            <div class="option-group">
+                <div class="option-card selected" onclick="selectOption(this, 'time', '12h')">12h</div>
+                <div class="option-card" onclick="selectOption(this, 'time', '24h')">24h</div>
+            </div>
+            <br>
+            <button class="wiz-btn primary" onclick="nextStep(2)">Next</button>
+        </div>
+
+        <!-- Step 2: Features -->
+        <div class="wizard-step" id="step-2">
+            <div class="wizard-title">Configuration</div>
+            
+            <div class="toggle-row">
+                <span>Extra Features Mode</span>
+                <label class="switch"><input type="checkbox"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+                <span>Performance Mode</span>
+                <label class="switch"><input type="checkbox"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+                <span>Hide from History (cloaking)</span>
+                <label class="switch"><input type="checkbox"><span class="slider"></span></label>
+            </div>
+            
+            <br>
+            <button class="wiz-btn primary" onclick="nextStep(3)">Next</button>
+        </div>
+
+        <!-- Step 3: Reconfirm Theme -->
+        <div class="wizard-step" id="step-3">
+            <div class="wizard-title">Confirm Theme</div>
+            <div class="wizard-desc">Would you like to keep this color?</div>
+            <div id="wizard-theme-grid" class="theme-row"></div>
+            <br>
+            <button class="wiz-btn primary" onclick="nextStep(4)">Confirm Color</button>
+        </div>
+
+        <!-- Step 4: Reconfirm Password -->
+        <div class="wizard-step" id="step-4">
+            <div class="wizard-title">Security Check</div>
+            <div class="wizard-desc">Please confirm your session password.</div>
+            <h2 style="color: #333; margin: 10px 0;">SHINY1</h2>
+            <p style="font-size: 0.8rem; color: #888; margin-bottom: 20px;">(Session Key)</p>
+            
+            <button class="wiz-btn primary" onclick="nextStep(5)">Confirm & Finish</button>
+        </div>
+
+        <!-- Step 5: Success & Fade Out -->
+        <div class="wizard-step" id="step-5">
+            <div class="wizard-title" style="font-size: 2rem;">You're all Set!</div>
+            <div class="wizard-desc">Let's begin.</div>
+        </div>
+
+    </div>
+
+    <!-- LAYER 3: FINAL ERROR MESSAGE -->
+    <div id="final-message">
+        You're here too early in development
     </div>
 
     <script>
+        // Global State
+        const state = {
+            username: '',
+            theme: '#ffffff',
+            settings: { timeFormat: '12h' }
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
+            /* --- INTRO VARIABLES --- */
             const container = document.getElementById('vortex-container');
+            const introContent = document.getElementById('intro-content');
             const mainTitle = document.getElementById('main-title');
-            const inputSection = document.getElementById('input-section');
+            const nameStage = document.getElementById('name-stage');
+            const passStage = document.getElementById('password-stage');
+            const themeSection = document.getElementById('theme-section');
             
             let spawnInterval;
 
@@ -179,54 +385,141 @@
                 const ring = document.createElement('div');
                 ring.classList.add('vortex-ring');
                 container.appendChild(ring);
-
                 const animation = ring.animate([
                     { transform: 'translateZ(-1000px) rotate(0deg) scale(0.5)', opacity: 0 },
                     { opacity: 0.5, offset: 0.2 },
                     { transform: 'translateZ(500px) rotate(180deg) scale(3)', opacity: 0 }
-                ], {
-                    duration: 6000, easing: 'linear', iterations: 1
-                });
-
+                ], { duration: 6000, easing: 'linear', iterations: 1 });
                 animation.onfinish = () => ring.remove();
             }
-
             spawnInterval = setInterval(createRing, 600); 
             createRing();
 
-            /* --- THE SEQUENCE --- */
-            
-            // 1. STOP VORTEX & SHOW "OpenSpaces" (2.5s)
-            setTimeout(() => {
-                clearInterval(spawnInterval);
-                mainTitle.classList.add('materialized');
-            }, 2500);
+            /* --- TIMELINE --- */
+            setTimeout(() => { clearInterval(spawnInterval); mainTitle.classList.add('materialized'); }, 2500);
+            setTimeout(() => { mainTitle.classList.remove('materialized'); mainTitle.classList.add('dispersed'); }, 4500);
+            setTimeout(() => { mainTitle.innerText = "Welcome"; mainTitle.classList.remove('dispersed'); void mainTitle.offsetWidth; mainTitle.classList.add('materialized'); }, 5500);
+            setTimeout(() => { nameStage.classList.add('active'); document.getElementById('username').focus(); }, 7000);
 
-            // 2. DEMATERIALIZE "OpenSpaces" (Wait 2s after appearing = 4.5s total)
-            setTimeout(() => {
-                // Remove the visible class and add the dispersed class
-                mainTitle.classList.remove('materialized');
-                mainTitle.classList.add('dispersed');
-            }, 4500);
+            /* --- INPUT HANDLING --- */
+            document.getElementById('username').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && e.target.value.trim() !== "") {
+                    state.username = e.target.value;
+                    nameStage.classList.remove('active'); nameStage.classList.add('finished');
+                    setTimeout(() => { passStage.classList.add('active'); document.getElementById('password').focus(); }, 500);
+                }
+            });
 
-            // 3. CHANGE TEXT & REFORM as "Welcome" (Wait for disperse to finish = 5.5s total)
-            setTimeout(() => {
-                // Change text while it is invisible/dispersed
-                mainTitle.innerText = "Welcome";
+            document.getElementById('password').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    if (e.target.value === "SHINY1") {
+                        passStage.classList.remove('active'); passStage.classList.add('finished');
+                        mainTitle.classList.remove('materialized'); mainTitle.classList.add('dispersed');
+                        setTimeout(() => {
+                            mainTitle.innerText = "Choose your theme for today's session";
+                            mainTitle.classList.remove('dispersed'); void mainTitle.offsetWidth; mainTitle.classList.add('materialized');
+                            themeSection.classList.add('active');
+                        }, 1500);
+                    } else {
+                        e.target.classList.add('shake');
+                        setTimeout(() => { e.target.classList.remove('shake'); e.target.value = ""; }, 500);
+                    }
+                }
+            });
+
+            /* --- THEME SELECTION --- */
+            document.querySelectorAll('.color-box').forEach(box => {
+                box.addEventListener('click', () => {
+                    const color = box.getAttribute('data-color');
+                    applyTheme(color);
+                    
+                    themeSection.classList.remove('active'); themeSection.classList.add('finished');
+                    mainTitle.classList.remove('materialized'); mainTitle.classList.add('dispersed');
+                    
+                    setTimeout(() => {
+                        mainTitle.innerText = "Getting Things Ready...";
+                        mainTitle.classList.remove('dispersed'); void mainTitle.offsetWidth; mainTitle.classList.add('materialized');
+                        
+                        setTimeout(initiateWizardMode, 3000);
+                    }, 1500);
+                });
+            });
+
+            function applyTheme(color) {
+                state.theme = color;
+                document.documentElement.style.setProperty('--theme-color', color);
+                if(color === '#333333' || color === '#000000') {
+                    document.documentElement.style.setProperty('--theme-glow', '0 0 10px rgba(0,0,0,0.2)');
+                } else {
+                    document.documentElement.style.setProperty('--theme-glow', `0 0 20px ${color}`);
+                }
+            }
+
+            /* --- TRANSITION TO WHITE MODE --- */
+            function initiateWizardMode() {
+                document.body.style.backgroundColor = 'black';
+                introContent.style.opacity = '0';
+                container.style.opacity = '0'; 
                 
-                // Remove disperse class and add materialized back to bring it in
-                mainTitle.classList.remove('dispersed');
-                
-                // Small delay to ensure browser registers the class removal before adding 'materialized'
-                void mainTitle.offsetWidth; // Force Reflow
-                mainTitle.classList.add('materialized');
-            }, 5500);
-
-            // 4. SHOW INPUT BAR (After "Welcome" is fully visible = 7.0s total)
-            setTimeout(() => {
-                inputSection.classList.add('visible');
-            }, 7000);
+                setTimeout(() => {
+                    document.documentElement.style.setProperty('--bg-color', '#ffffff');
+                    document.documentElement.style.setProperty('--text-color', '#333333');
+                    document.getElementById('wizard-container').style.display = 'block';
+                    populateWizardThemeGrid();
+                    setTimeout(() => { document.body.style.backgroundColor = 'white'; }, 100);
+                }, 2000);
+            }
         });
+
+        /* --- WIZARD LOGIC --- */
+        function selectOption(el, type, val) {
+            el.parentElement.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            state.settings.timeFormat = val;
+        }
+
+        function nextStep(stepNumber) {
+            document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
+            const next = document.getElementById('step-' + stepNumber);
+            if(next) next.classList.add('active');
+
+            // --- FINAL STEP LOGIC ---
+            if(stepNumber === 5) {
+                // 1. Wait 2 seconds while showing "You're all Set"
+                setTimeout(() => {
+                    // 2. Fade entire Body to Black
+                    document.documentElement.style.setProperty('--bg-color', '#000000');
+                    document.body.style.backgroundColor = 'black';
+                    document.getElementById('wizard-container').style.opacity = '0';
+                    
+                    // 3. Show Final Error Message after fade is complete
+                    setTimeout(() => {
+                        document.getElementById('final-message').style.opacity = '1';
+                    }, 2500);
+                }, 2000);
+            }
+        }
+
+        function populateWizardThemeGrid() {
+            const grid = document.getElementById('wizard-theme-grid');
+            const colors = ['#ff4f4f', '#ffd700', '#4fffae', '#4fafff', '#bf4fff', '#333333'];
+            grid.innerHTML = '';
+            colors.forEach(c => {
+                const box = document.createElement('div');
+                box.className = 'color-box';
+                box.style.backgroundColor = c === '#333333' ? '#ffffff' : c;
+                box.style.border = c === '#333333' ? '1px solid #ccc' : 'none';
+                if(c === '#333333') box.setAttribute('data-color', '#333333'); 
+                else box.setAttribute('data-color', c);
+
+                box.onclick = () => {
+                    document.documentElement.style.setProperty('--theme-color', c);
+                    box.style.transform = 'scale(0.9)';
+                    setTimeout(() => box.style.transform = 'scale(1)', 100);
+                }
+                grid.appendChild(box);
+            });
+        }
     </script>
 </body>
 </html>
